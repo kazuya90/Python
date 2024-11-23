@@ -52,9 +52,9 @@ class ExcelToExcel:
             df = df[df[key] == value]
         return df
 
-    def process_data(self, df):
-        df.loc[:, '年齢'] = df['年齢'] * 2
-        return df
+    # def process_data(self, df):
+    #     df.loc[:, '年齢'] = df['年齢'] * 2
+    #     return df
     
     # ソートする列名を指定
     def sort_data(self, df, sort_column):
@@ -64,7 +64,7 @@ class ExcelToExcel:
     
     # 書き込む列を絞り込む
     def select_columns(self, df):
-        return df[['都道府県', '市区町村', '年齢', '人口']]
+        return df[['都道府県', '年齢']]
 
     def main(self):
         # Excelファイルの読み込み
@@ -72,9 +72,11 @@ class ExcelToExcel:
         # 条件によるフィルタリング
         filtered_df = self.filter_data_dict(df,self.filter_conditions_dict)
         # 加工
-        processed_df = self.process_data(filtered_df)
+        # processed_df = self.process_data(filtered_df)
+        # 列の絞り込み
+        selected_df = self.select_columns(filtered_df)
         # ソート
-        sorted_df = self.sort_data(filtered_df, self.sort_column)
+        sorted_df = self.sort_data(selected_df, self.sort_column)
         # Excelファイルの書き込み
         self.write_excel(sorted_df)
 
