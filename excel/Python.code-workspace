@@ -1,0 +1,11 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  {
+    "python.formatting.provider": "black", // または "autopep8" や "yapf"
+    "editor.formatOnSave": true // 保存時に自動整形を有効化
+  }
+}
