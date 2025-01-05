@@ -42,7 +42,7 @@ class InputExcelFile:
     
     #書き込む列を絞り込む
     def select_columns(self, df):
-        return df[['管理番号','検査カテゴリ', 'コメント']]
+        return df[['管理番号','検査カテゴリ', '検査結果','行番号','コメント','対象ソースコード','修正ソースコード']]
 
     def main(self):
         print('反映元:',self.input_file_path)
@@ -62,7 +62,8 @@ class InputExcelFile:
 if __name__ == '__main__':
     input_file_path = input('ファイルパスを入力してください')
     input_sheet_name = '検査'
-    condition = {'管理番号':'AAA0001','検査カテゴリ':'リンク'}
-    start_row = 3
+    condition = {'管理番号':'NUL0001','検査カテゴリ':'リンク'}
+    #0始まり？
+    start_row = 12
     input_excel = InputExcelFile(input_file_path, input_sheet_name,condition,input_start_row=start_row)
     print(input_excel.df.head)

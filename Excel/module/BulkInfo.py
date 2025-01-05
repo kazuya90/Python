@@ -17,8 +17,6 @@ class BulkInfo:
         #IDを保持
         self.management_id = str()
         #識別のアルファベットを保持
-        self.management_alphabet = str()
-        #ページ番号を保持
         self.management_number = str()
         #検査カテゴリを保持
         self.category = str()
@@ -27,11 +25,10 @@ class BulkInfo:
         self.condition:dict = self.get_condition()
 
     def get_condition(self):
+        #フィルタ条件を返す
         condition_dict = dict()
         #管理番号を加工
-        #condition[1]を四桁の0埋め
-        management = self.management_alphabet + self.management_number.zfill(4)
-        condition_dict = {'管理番号':management,'検査カテゴリ':self.category}
+        condition_dict = {'管理番号':self.management_number,'検査カテゴリ':self.category}
         return condition_dict
         
     # IDと管理番号と検査カテゴリを各リストに格納
@@ -43,19 +40,17 @@ class BulkInfo:
         file_names = file_name.split('_')
 
         self.management_id = file_names[0]
-        self.management_alphabet = file_names[1]
-        self.management_number = file_names[2]
-        self.category = file_names[3]
+        self.management_number = file_names[1]
+        self.category = file_names[2]
 
     # pathからファイル名のみを取得
     def get_filename(self, path):
         return os.path.basename(path)
 
 if __name__ == '__main__':
-    bulk_path='C:/Users/user/OneDrive/プロジェクト/Python/Excel/test_data/0000_AAA_01_リンク_検査結果一括更新_20241206122532.xlsx'
+    bulk_path='C:/Users/user/OneDrive/プロジェクト/Python/Excel/test_data/1867_NUL0000_リスト_検査結果一括更新_20241227092430.xlsx'
     bulk_info = BulkInfo(bulk_path)
-    print(bulk_info.management_id)
-    print(bulk_info.management_alphabet)
-    print(bulk_info.management_number)
-    print(bulk_info.category)
-    print(bulk_info.condition)
+    print("id",bulk_info.management_id)
+    print("number",bulk_info.management_number)
+    print("category",bulk_info.category)
+    print("condition",bulk_info.condition)

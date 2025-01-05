@@ -12,7 +12,6 @@ class UI:
         self.bulk_files = []
         self.inspection_file = ""
         self.folder_path = ""
-        self.output_sheet_name = "Output"
 
         self.create_widgets()
 
@@ -68,6 +67,7 @@ class UI:
         self.root.event_generate("<<CustomEvent>>", when="tail")
 
     def select_file(self):
+
         file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx, *.xlsm")])
         if file_path:
             self.inspection_file = file_path
