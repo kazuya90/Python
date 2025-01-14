@@ -1,8 +1,8 @@
 import pandas as pd
 import openpyxl
 import datetime
-from .InputExcelFile import InputExcelFile
-from .BulkInfo import BulkInfo
+from module.InputExcelFile import InputExcelFile
+from module.BulkInfo import BulkInfo
 import shutil
 
 class OutputExcelFile:
@@ -11,27 +11,28 @@ class OutputExcelFile:
     output_file_name (str): 出力Excelファイルの名前
     output_sheet_name (str): 出力Excelファイルのシート名
     """
-    def __init__(self, df,output_folder_path,management_id,management_number,category,bulk_excel_file_path):
+    def __init__(self, df,management_id,management_number,category,bulk_excel_file_path):
         self.data_list = self.df_to_list(df)
-        self.output_file_name = self.getfile_name(management_id,management_number,category)
-        self.output_file_path = output_folder_path +self.output_file_name
         self.bulk_excel_file_path = bulk_excel_file_path
-        self.wb = self.copy_excel()
+        self.wb = self.load_bulk_excel()
         self.all_ws = self.wb['検査結果(ページ単位)']
         self.individual_ws = self.wb['検査結果(検査箇所単位)']
+        self.copy_all_ws = self.copy_ws(self.all_ws)
+        self.copy_individual_ws = self.copy_ws(self.individual_ws)
 
         self.main()
-    #一括登録ファイルのコピー、コピーしたものに編集する
-    def copy_excel(self):
-        print(self.output_file_path)
-        shutil.copyfile(self.bulk_excel_file_path, self.output_file_path)
-        wb = openpyxl.load_workbook(self.output_file_path)
+    #一括登録ファイルを取得
+    def load_bulk_excel(self):
+        wb = openpyxl.load_workbook(self.bulk_excel_file_path)
         return wb
-    
-    def getfile_name(self,management_id,management_number,category):
-        date_str = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        file_name = management_id +'_'+management_number + '_' + category + '_検査結果一括更新_' + date_str+'.xlsx'
-        return file_name
+    # 一括登録ファイルのシートをコピーする
+    def copy_ws(self,ws):
+        ws_copy = self.wb.copy_worksheet(ws)
+        ws_copy.title = '_' + ws.title
+        # コピーしたシートを表紙シートのあとに移動
+        self.wb._sheets.remove(ws_copy)
+        self.wb._sheets.append(ws_copy)
+        return ws_copy
 
     # new_bulk_excel_file_pathにdfを書き込む
     def write_excel(self):
@@ -45,7 +46,7 @@ class OutputExcelFile:
             else:
                 self.write_cell(self.individual_ws,individual_index,row)
                 individual_index += 1
-        self.wb.save(self.output_file_path)
+        self.wb.save(self.bulk_excel_file_path)
     # write_excelのサブモジュール
     # 引数にワークシートオブジェクト
     # ワークシートオブジェクトのセルに値を代入
@@ -55,32 +56,37 @@ class OutputExcelFile:
         #検査結果は結合されないため分岐から除外
         ws[index][3].value = row[2]
         if (not(is_merged)):
+            # 結合セルではない場合はそのまま代入
             ws[index][5].value = row[4]
             ws[index][6].value = row[5]
             ws[index][7].value = row[6]
         else:
-            comment_list = list()
-            amend_list = list()
+        #結合セルの扱い
+            if(is_merged == index):
+                #結合セルの最初の行
+                ws[is_merged][5].value = ""
+                #対象ソースコードは先頭のもののみ代入
+                ws[index][6].value = row[5]
+                ws[is_merged][7].value = ""
+            
+            if(row[2]=="いいえ"):
+                #検査結果がいいえの場合のみ検査.xlsmの内容を反映
+                new_comment = row[4] if pd.notna(row[4]) else ""
+                ws[is_merged][5].value = "\n".join([str(ws[is_merged][5].value),new_comment]).strip()
+                new_ammend = row[6] if pd.notna(row[6]) else ""
+                ws[is_merged][7].value = "\n".join([str(ws[is_merged][7].value),new_ammend]).strip()
 
-            comment_list.append(ws[is_merged][5].value)
-            comment_list.append(row[4])
 
-            amend_list.append(ws[is_merged][6].value)
-            amend_list.append(row[5])
-
-            ws[is_merged][5].value = "\n".join(comment_list)
             #対象ソースコードは結合不要なため除外
             #ws[is_merged][6].value += row[5]
-            ws[is_merged][7].value = "\n".join(amend_list)
+
 
     # 結合セルであり結合の最初のセルではない場合は最初の行番号を返す
     def is_merged_cell_not_top_left(self,cell, ws):
         for merged_range in ws.merged_cells.ranges:
+            # cell.coordinateはセルのアドレス
             if cell.coordinate in merged_range:
-                # 結合セルの左上セルかを判定
-                if cell.row == merged_range.min_row and cell.column == merged_range.min_col:
-                    return False  # 左上セルなら False
-                return merged_range.min_row  # 結合セルで左上セルでない場合は最初の行番号を返す
+                return merged_range.min_row  # 結合セルの場合は最初の行番号を返す
         return False  # 結合セルでない場合
     
     # dfをopenpyxlで扱えるようにリストに変換
@@ -94,7 +100,7 @@ class OutputExcelFile:
         self.write_excel()
 
 if __name__ == '__main__':
-    bulk_path='C:/Users/user/OneDrive/プロジェクト/Python/Excel/test_data/本物1867_NUL0000_リンク_検査結果一括更新_20241227085441.xlsx'
+    bulk_path='C:/Users/user/OneDrive/プロジェクト/Python/Excel/test_data/1867_NUL0000_リンク_検査結果一括更新_20241227085441.xlsx'
     bulk_info = BulkInfo(bulk_path)
 
     # テスト用
@@ -105,11 +111,8 @@ if __name__ == '__main__':
     input_excel = InputExcelFile(input_file_path, input_sheet_name,condition,input_start_row=start_row)
     input_excel_file = InputExcelFile(input_file_path, input_sheet_name,condition,input_start_row=start_row)
 
-    # テスト用
-    folder_path = 'C:/Users/user/OneDrive/プロジェクト/Python/Excel/test_data/'
 
     OutputExcelFile(input_excel_file.df,
-                         folder_path,
                          bulk_info.management_id,
                          bulk_info.management_number,
                          bulk_info.category,

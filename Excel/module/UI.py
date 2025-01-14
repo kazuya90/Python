@@ -11,7 +11,6 @@ class UI:
 
         self.bulk_files = []
         self.inspection_file = ""
-        self.folder_path = ""
 
         self.create_widgets()
 
@@ -37,17 +36,6 @@ class UI:
 
         self.bulk_files_label = tk.Label(self.root, text="ファイルが選択されていません")
         self.bulk_files_label.grid(row=3, column=1, padx=10, pady=0, sticky="ew")
-
-        ## ラベル
-        self.label = tk.Label(self.root, text="出力先のフォルダを選択してください", font=("Meiryo UI", 10, "bold"))
-        self.label.grid(row=4, column=0, columnspan=2, padx=10, pady=(10, 0), sticky="w")
-
-        ## フォルダ選択ボタンとラベル
-        self.folder_button = tk.Button(self.root, text="フォルダを選択", command=self.select_folder)
-        self.folder_button.grid(row=5, column=0, padx=10, pady=0)
-
-        self.output_folder_label = tk.Label(self.root, text="フォルダが選択されていません")
-        self.output_folder_label.grid(row=5, column=1, padx=10, pady=0, sticky="ew")
 
         ## 実行ボタン
         self.button = tk.Button(self.root, text="反映", command=lambda: self.trigger_event())
@@ -79,12 +67,6 @@ class UI:
         if file_paths:
             self.bulk_files = file_paths
             self.bulk_files_label.config(text=", ".join(file_paths))
-
-    def select_folder(self):
-        folder_path = filedialog.askdirectory()
-        if folder_path:
-            self.folder_path = folder_path
-            self.output_folder_label.config(text=folder_path)
 
 if __name__ == "__main__":
     def print_test(message):
