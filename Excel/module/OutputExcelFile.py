@@ -55,31 +55,43 @@ class OutputExcelFile:
         is_merged = self.is_merged_cell_not_top_left(ws[index][6],ws)
         #検査結果は結合されないため分岐から除外
         ws[index][3].value = row[2]
+
+        #/rを削除
+        comment = self.trim_r(row[4]) if row[4] is not None else ''
+        target = self.trim_r(row[5]) if row[5] is not None else ''
+        ammend = self.trim_r(row[6]) if row[6] is not None else ''
+
+
         if (not(is_merged)):
             # 結合セルではない場合はそのまま代入
-            ws[index][5].value = row[4]
-            ws[index][6].value = row[5]
-            ws[index][7].value = row[6]
+            ws[index][5].value = comment
+            ws[index][6].value = target
+            ws[index][7].value = ammend
         else:
         #結合セルの扱い
             if(is_merged == index):
                 #結合セルの最初の行
                 ws[is_merged][5].value = ""
                 #対象ソースコードは先頭のもののみ代入
-                ws[index][6].value = row[5]
+                ws[index][6].value = target
                 ws[is_merged][7].value = ""
             
             if(row[2]=="いいえ"):
                 #検査結果がいいえの場合のみ検査.xlsmの内容を反映
-                new_comment = row[4] if pd.notna(row[4]) else ""
+                new_comment = comment if pd.notna(comment) else ""
                 ws[is_merged][5].value = "\n".join([str(ws[is_merged][5].value),new_comment]).strip()
-                new_ammend = row[6] if pd.notna(row[6]) else ""
+                new_ammend = ammend if pd.notna(ammend) else ""
                 ws[is_merged][7].value = "\n".join([str(ws[is_merged][7].value),new_ammend]).strip()
 
 
             #対象ソースコードは結合不要なため除外
-            #ws[is_merged][6].value += row[5]
-
+            #ws[is_merged][6].value += target
+    def trim_r(self,cell_value):
+        # 値に改行コード(_x000D_)が含まれている場合は削除
+        _value = cell_value
+        if isinstance(cell_value, str):
+            _value = cell_value.replace('_x000D_', '')
+        return _value
 
     # 結合セルであり結合の最初のセルではない場合は最初の行番号を返す
     def is_merged_cell_not_top_left(self,cell, ws):
@@ -100,7 +112,7 @@ class OutputExcelFile:
         self.write_excel()
 
 if __name__ == '__main__':
-    bulk_path='C:/Users/user/OneDrive/プロジェクト/Python/Excel/test_data/1867_NUL0000_リンク_検査結果一括更新_20241227085441.xlsx'
+    bulk_path="C:/Users/user/OneDrive/プロジェクト/Python/Excel/test_data/本物1867_NUL0000_リンク_検査結果一括更新_20250101163437.xlsx"
     bulk_info = BulkInfo(bulk_path)
 
     # テスト用
