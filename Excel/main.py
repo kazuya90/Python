@@ -28,7 +28,7 @@ if __name__ == '__main__':
   def button_click(ui):
     for file in ui.bulk_files:
       bulk_info = BulkInfo(file)
-      start_row = 12
+      start_row = 3
       input_sheet_name = '検査'
       input_excel_file = InputExcelFile(ui.inspection_file ,input_sheet_name, bulk_info.condition,input_start_row=start_row)
       print(input_excel_file.df)
