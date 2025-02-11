@@ -5,7 +5,7 @@ from module.OutputExcelFile import OutputExcelFile
 class UI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Simple UI")
+        self.root.title("一括登録シート反映")
         self.root.geometry("400x300")  # ウィンドウサイズを設定
         self.root.resizable(False, False)  # ウィンドウサイズを固定
 

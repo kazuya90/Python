@@ -1,13 +1,12 @@
 import pandas as pd
 import openpyxl
-import datetime
 from module.InputExcelFile import InputExcelFile
 from module.BulkInfo import BulkInfo
-import shutil
+import numpy
 
 class OutputExcelFile:
     """
-    新しいExcelファイルに保存するクラス
+    既存の一括登録シートをコピーして反映する
     output_file_name (str): 出力Excelファイルの名前
     output_sheet_name (str): 出力Excelファイルのシート名
     """
@@ -19,6 +18,7 @@ class OutputExcelFile:
         self.individual_ws = self.wb['検査結果(検査箇所単位)']
         self.copy_all_ws = self.copy_ws(self.all_ws)
         self.copy_individual_ws = self.copy_ws(self.individual_ws)
+        self.merge_list = []
 
         self.main()
     #一括登録ファイルを取得
@@ -50,42 +50,66 @@ class OutputExcelFile:
     # write_excelのサブモジュール
     # 引数にワークシートオブジェクト
     # ワークシートオブジェクトのセルに値を代入
-    def write_cell(self,ws,index,row):
+    def write_cell(self,ws,index,data_row):
+
+        result = data_row[2]
+        _comment = data_row[4]
+        _target = data_row[5]
+        _ammend = data_row[6] 
+
+        bulk_result = ws[index][3]
+        bulk_comment = ws[index][5]
+        bulk_target = ws[index][6]
+        bulk_ammend = ws[index][7]
         #コメント列が結合セルか判定
-        is_merged = self.is_merged_cell_not_top_left(ws[index][6],ws)
+        is_merged = self.is_merged_cell_not_top_left(bulk_target,ws)
         #検査結果は結合されないため分岐から除外
-        ws[index][3].value = row[2]
+        bulk_result.value = result
+        
+        # いいえ以外コメント、対象ソースコード、修正ソースコードには何もしない
+        if result != "いいえ":
+            return
 
         #/rを削除
-        comment = self.trim_r(row[4]) if row[4] is not None else ''
-        target = self.trim_r(row[5]) if row[5] is not None else ''
-        ammend = self.trim_r(row[6]) if row[6] is not None else ''
-
+        comment = self.trim_r(_comment) if _comment is not None else ''
+        target = self.trim_r(_target) if _target is not None else ''
+        ammend = self.trim_r(_ammend) if _ammend is not None else ''
 
         if (not(is_merged)):
             # 結合セルではない場合はそのまま代入
-            ws[index][5].value = comment
-            ws[index][6].value = target
-            ws[index][7].value = ammend
+            bulk_comment.value = comment
+            bulk_target.value = target
+            bulk_ammend.value = ammend
+        elif(is_merged not in self.merge_list):
+            # 反映をして、結合セルのリストに追加
+            bulk_comment.value = comment
+            bulk_target.value = target
+            bulk_ammend.value = ammend
+            self.merge_list.append(is_merged)
+        #検査結果がいいえの結合セルの扱い
         else:
-        #結合セルの扱い
-            if(is_merged == index):
-                #結合セルの最初の行
-                ws[is_merged][5].value = ""
-                #対象ソースコードは先頭のもののみ代入
-                ws[index][6].value = target
-                ws[is_merged][7].value = ""
-            
-            if(row[2]=="いいえ"):
-                #検査結果がいいえの場合のみ検査.xlsmの内容を反映
-                new_comment = comment if pd.notna(comment) else ""
-                ws[is_merged][5].value = "\n".join([str(ws[is_merged][5].value),new_comment]).strip()
-                new_ammend = ammend if pd.notna(ammend) else ""
-                ws[is_merged][7].value = "\n".join([str(ws[is_merged][7].value),new_ammend]).strip()
+            #　結合セルであり、いいえの判定が複数ある場合
+            # 検査項目を格納
+            inspection = ws[is_merged][1].value
+            row_number = ws[is_merged][4].value
+            self.isUpdate(ws[is_merged][5],comment,inspection,row_number)
+            self.isUpdate(ws[is_merged][6],target,inspection,row_number)
+            self.isUpdate(ws[is_merged][7],ammend,inspection,row_number)
 
-
-            #対象ソースコードは結合不要なため除外
-            #ws[is_merged][6].value += target
+    def isUpdate(self,bulk_ws,value,inspection,row_number):
+        if pd.isna(value):
+            return
+        if bulk_ws.value != value:
+            print(f"""
+検査項目：{inspection}
+行番号:{row_number}
+どちらを反映するか選択してください
+1：{bulk_ws.value}
+2：{value}
+""")
+            ans = input()
+            if ans == '2':
+                bulk_ws.value = value
     def trim_r(self,cell_value):
         # 値に改行コード(_x000D_)が含まれている場合は削除
         _value = cell_value
@@ -116,13 +140,12 @@ if __name__ == '__main__':
     bulk_info = BulkInfo(bulk_path)
 
     # テスト用
-    input_file_path = input('ファイルパスを入力してください')
+    input_file_path = input('検査.xlsxファイルパスを入力してください')
     input_sheet_name = '検査'
     condition = {'管理番号':'NUL0000','検査カテゴリ':'リンク'}
-    start_row = 12
+    start_row = 3
     input_excel = InputExcelFile(input_file_path, input_sheet_name,condition,input_start_row=start_row)
     input_excel_file = InputExcelFile(input_file_path, input_sheet_name,condition,input_start_row=start_row)
-
 
     OutputExcelFile(input_excel_file.df,
                          bulk_info.management_id,

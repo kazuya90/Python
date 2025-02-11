@@ -1,5 +1,6 @@
 import os
 import sys
+import subprocess
 
 # 実行ファイルまたはスクリプトが存在するディレクトリ
 if hasattr(sys, '_MEIPASS'):  # PyInstallerで実行される場合
@@ -37,12 +38,18 @@ if __name__ == '__main__':
       print(bulk_info.category)
 
       OutputExcelFile(input_excel_file.df,bulk_info.management_id, bulk_info.management_number, bulk_info.category,bulk_info.bulk_file_path)
+
+    for file in ui.bulk_files:
+      # PowerShell スクリプトを実行
+      try:
+          subprocess.run(["powershell.exe", "-ExecutionPolicy", "Bypass", "-File", base_path+"/module/OpenAndSave.ps1", file], check=True)
+      except subprocess.CalledProcessError as e:
+          print(f"PowerShell script failed: {e}")
     print('処理が完了しました。')
   root = tk.Tk()
   event_receiver = EventReceiver(root)
   ui = UI(root)
   ui.root.mainloop()
-
 
 
 

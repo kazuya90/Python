@@ -3,28 +3,26 @@ $excel = New-Object -ComObject Excel.Application
 # バックグラウンドで実行
 # $excel.Visible = $false
 
-try {
-    # フォルダ内のすべての.xlsxファイルを処理
-    # 入力を求める
-    $folderPath = Read-Host "フォルダのパスを入力してください"
-    $files = Get-ChildItem -LiteralPath $folderPath -Filter *.xlsx
+# 引数にフォルダのパスを指定して実行
 
-    foreach ($file in $files) {
-        # ファイル名を表示
-        Write-Host "Processing file: $($file.FullName)"
+try {
+    # 引数にあるすべてのファイルへ処理
+    foreach ($file in $args) {
+        Write-Host "Processing file: $($file)"
         
-        $workbook = $excel.Workbooks.Open($file.FullName)
-        
+        $workbook = $excel.Workbooks.Open($file)
+    
         # 変更を保存
         $workbook.Save()
-        
+    
         # ワークブックを閉じる
         $workbook.Close()
-        
+    
         # COMオブジェクトの解放
         [System.Runtime.Interopservices.Marshal]::ReleaseComObject($workbook) | Out-Null
     }
-} catch {
+}
+    catch {
     Write-Host "An error occurred: $_"
 } finally {
     # Excelアプリケーションを終了

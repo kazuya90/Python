@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('module/OpenAndSave.ps1', 'module')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
